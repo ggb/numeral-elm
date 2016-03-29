@@ -152,12 +152,12 @@ formatTime lang format value strValue =
     ] |> String.join ":"
 
 
-checkParensAndSign : String -> (Bool, Bool, String)
+checkParensAndSign : String -> (String, Bool, Bool)
 checkParensAndSign format =
   if String.contains "(" format then
-    (True, False, String.slice 1 -1 format)
+    (String.slice 1 -1 format, True, False)
   else
-    (False, True, emptyReplace "\\+" format)
+    (emptyReplace "\\+" format, False, True)
 
 
 checkAbbreviation : Language -> String -> Float -> (String, String, Float)
@@ -215,11 +215,72 @@ checkByte format value =
     (format', value', bytes ++ suffix)
 
 
+checkOrdinal lang format value =
+  let
+    (ord, format') =
+      if String.contains " o" format then
+        (" ", emptyReplace " o" format)
+      else
+        ("", emptyReplace "o" format)
+  in
+    (format', ord ++ (toString value |> lang.ordinal))
+
+
+checkOptionalDec format =
+  if String.contains "[.]" format then
+    (Regex.replace All (regex "[.]") (\_ -> ".") format, True)
+  else
+    (format, False)
+
+
+toFixed value precision optionals =
+  let
+    power = 10^precision
+    -- output =
+  in
+    ""
+
+
+processPrecision lang format value precision =
+  let
+    fst =
+      if String.contains "[" precision then
+        emptyReplace "]" precision
+        |> String.split "["
+        |> toFixed value
+      else
+        toFixed value precision
+    w =
+      String.split "." fst
+      |> List.head
+      |> Maybe.withDefault ""
+  -- TODO!
+  in
+    ("","")
+
+
 formatNumber : NumberTypeFormatter
 formatNumber lang format value strValue =
   let
-    (negP, signed, format') = checkParensAndSign format
-    (format'', abbr, value') = checkAbbreviation lang format value
+    (format', negP, signed) = checkParensAndSign format
+    (format'', abbr, value') = checkAbbreviation lang format' value
+    (format''', value'', bytes) = checkByte format'' value'
+    -- this is a stupid mess...
+    (format'''', ord) = checkOrdinal lang format''' value''
+    (finalFormat, optDec) = checkOptionalDec format''''
+    strValue' = toString value''
+    w =
+      String.split "." strValue'
+      |> List.head
+      |> Maybe.withDefault ""
+    precision =
+      String.split "." finalFormat
+      |> List.drop 1
+      |> List.head
+      |> Maybe.withDefault ""
+    thousands =
+      String.contains "," finalFormat
+    (w', d) = processPrecision lang format value precision
   in
     ""
 
