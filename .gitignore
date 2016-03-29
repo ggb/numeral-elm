@@ -1,5 +1,7 @@
-# elm-package generated files
-elm-package.json
+*~
+node_modules/
 elm-stuff/
-# elm-repl generated files
-repl-temp-*
+docs/
+*.js
+*.html
+.vscode/
