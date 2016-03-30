@@ -333,6 +333,17 @@ formatNumber lang format value strValue =
       else
         w'
   in
+    {-
+    ((negP && neg) ? '(' : '') + 
+    ((!negP && neg) ? '-' : '') + 
+    ((!neg && signed) ? '+' : '') + 
+    w + 
+    d + 
+    ((ord) ? ord : '') + 
+    ((abbr) ? abbr : '') + 
+    ((bytes) ? bytes : '') + 
+    ((negP && neg) ? ')' : '');
+    -}
     w'' ++ d ++ ord ++ abbr ++ bytes
 
 
