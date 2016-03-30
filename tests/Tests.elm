@@ -115,7 +115,7 @@ rounding =
 -}
 
 myAssert (value, format, result) =
-  defaultTest (assertEqual (Numeral.format format value) result)
+  defaultTest (assertEqual result (Numeral.format format value))
 
 
 numbersTest =

@@ -175,7 +175,9 @@ checkAbbreviation lang format value =
       else
         ("", emptyReplace "a" format)
   in
-    if absValue >= 10^12 && abbrForce || abbrT then
+    if not <| String.contains "a" format then
+      (format, "", value)
+    else if absValue >= 10^12 && abbrForce || abbrT then
       (format', abbr ++ lang.abbreviations.trillion, value / 10^12)
     else if absValue < 10^12 && absValue >= 10^9 && abbrForce || abbrB then
       (format', abbr ++ lang.abbreviations.billion, value / 10^9)
@@ -203,17 +205,21 @@ checkByte format value =
         if value >= minValue && value < maxValue then
           if minValue > 0 then
             (power, value / minValue)
-          else
+          else 
             (power, value)
-        else
+        else if power < 10 then
           suffixIndex' (power + 1)
+        else
+            (-1, value)
     (suffixIndex, value') = suffixIndex' 0
     suffix =
       Array.get suffixIndex suffixes
       |> Maybe.withDefault ""
   in
-    (format', value', bytes ++ suffix)
-
+    if String.contains "b" format then
+      (format', value', bytes ++ suffix)
+    else
+      (format, value, "")
 
 checkOrdinal lang format value =
   let
@@ -223,7 +229,10 @@ checkOrdinal lang format value =
       else
         ("", emptyReplace "o" format)
   in
-    (format', ord ++ (toString value |> lang.ordinal))
+    if String.contains "o" format then
+      (format', ord ++ (toString value |> lang.ordinal))
+    else
+      (format, "")
 
 
 checkOptionalDec format =
@@ -233,12 +242,24 @@ checkOptionalDec format =
     (format, False)
 
 
-toFixed value precision optionals =
+toFixed : Int -> Float -> String
+toFixed precision value =
   let
-    power = 10^precision
-    -- output =
+    power = toFloat 10^(toFloat precision)
+    pad num =
+      case num of
+        [x, y] ->
+          [x, String.padRight precision '0' y]
+        [val] ->
+          [val, String.padRight precision '0' ""]
+        val ->
+          val
   in
-    ""
+    (round (value * power) |> toFloat) / power
+    |> toString
+    |> String.split "."
+    |> pad
+    |> String.join "."
 
 
 processPrecision lang format value precision =
@@ -247,23 +268,49 @@ processPrecision lang format value precision =
       if String.contains "[" precision then
         emptyReplace "]" precision
         |> String.split "["
-        |> toFixed value
+        |> List.map String.length
+        |> List.take 2
+        |> List.sum
+        |> (flip toFixed) value
       else
-        toFixed value precision
+        toFixed (String.length precision) value
+        |> Debug.log "fixed"
+    snd =
+      case String.split "." fst of
+        [x, y] ->
+          if String.length y > 0 then
+            lang.delimiters.decimal ++ y
+          else
+            ""
+        _ -> 
+          ""
     w =
       String.split "." fst
       |> List.head
       |> Maybe.withDefault ""
+    
   -- TODO!
   in
-    ("","")
+    if precision == "" then
+      (value |> toString |> String.split "." |> List.take 1 |> String.join "", "")
+    else
+      (w, snd) |> Debug.log "" 
+
+
+
+addThousandsDelimiter lang word =
+  Regex.replace 
+    All 
+    (regex "(\\d)(?=(\\d{3})+(?!\\d))") 
+    (\{match} -> match ++ lang.delimiters.thousands)
+    word
 
 
 formatNumber : NumberTypeFormatter
 formatNumber lang format value strValue =
   let
     (format', negP, signed) = checkParensAndSign format
-    (format'', abbr, value') = checkAbbreviation lang format' value
+    (format'', abbr, value') = checkAbbreviation lang format' value |> Debug.log "abbr"
     (format''', value'', bytes) = checkByte format'' value'
     -- this is a stupid mess...
     (format'''', ord) = checkOrdinal lang format''' value''
@@ -278,11 +325,15 @@ formatNumber lang format value strValue =
       |> List.drop 1
       |> List.head
       |> Maybe.withDefault ""
-    thousands =
-      String.contains "," finalFormat
-    (w', d) = processPrecision lang format value precision
+      |> Debug.log "precision"
+    (w', d) = processPrecision lang format value'' precision
+    w'' = 
+      if String.contains "," finalFormat then
+        addThousandsDelimiter lang w'
+      else
+        w'
   in
-    ""
+    w'' ++ d ++ ord ++ abbr ++ bytes
 
 
 formatWithLanguage : Language -> String -> Float -> String
