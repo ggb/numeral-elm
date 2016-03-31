@@ -1,7 +1,7 @@
 module Numeral where
 
 import String
-import Array
+import Array exposing (Array)
 import Regex exposing (HowMany(All), regex)
 
 
@@ -17,7 +17,7 @@ type alias Abbreviations =
   , trillion:String
   }
 
-type alias Ordinal = String -> String
+type alias Ordinal = Float -> String
 
 type alias Currency =
   { symbol:String
@@ -30,6 +30,23 @@ type alias Language =
   , currency:Currency
   }
 
+
+englishOrdinal : Ordinal
+englishOrdinal number =
+  let
+    number' = floor number
+    b = number' % 10
+  in
+    if floor (toFloat (number' % 100) / 10) == 1 then
+      "th"
+    else if b == 1 then
+      "st"
+    else if b == 2 then
+      "nd"
+    else if b == 3 then
+      "rd"
+    else
+      "th"
 
 enLang : Language
 enLang =
@@ -44,7 +61,7 @@ enLang =
     , trillion="t"
     }
   -- TODO!
-  , ordinal=(\str -> "th")
+  , ordinal=englishOrdinal
   , currency=
     { symbol="$"
     }
@@ -55,6 +72,7 @@ type alias NumberTypeFormatter =
   Language -> String -> Float -> String -> String
 
 
+suffixes : Array String
 suffixes =
   ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
   |> Array.fromList
@@ -67,6 +85,7 @@ indexOf part word  =
   |> Maybe.withDefault -1
 
 
+emptyReplace : String -> String -> String
 emptyReplace str =
   Regex.replace All (regex str) (\_ -> "")
 
@@ -74,11 +93,11 @@ emptyReplace str =
 formatWithoutCurrency : String -> (String, String)
 formatWithoutCurrency format =
   if String.contains " $" format then
-    (" ", emptyReplace " $" format)
+    (" ", emptyReplace " \\$" format)
   else if String.contains "$ " format then
-    (" ", emptyReplace "$ " format)
+    (" ", emptyReplace "\\$ " format)
   else
-    ("", emptyReplace "$" format)
+    ("", emptyReplace "\\$" format)
 
 
 formatCurrency : NumberTypeFormatter
@@ -89,19 +108,35 @@ formatCurrency lang format value strValue =
     minusSignIndex = indexOf "-" format
     (space, format') = formatWithoutCurrency format
     formatted = formatNumber lang format' value strValue
+    currencySymbol = lang.currency.symbol
   in
     if symbolIndex <= 1 then
       if String.contains "(" formatted || String.contains "-" formatted then
-        -- TODO
-        ""
+        if symbolIndex < openParenIndex || symbolIndex < minusSignIndex then
+          [ currencySymbol
+          , space
+          , if String.contains "-" formatted then "-" else ""
+          , if String.contains "(" formatted then "(" else ""
+          , String.slice 1 (String.length formatted) formatted
+          ] |> String.join ""
+        else
+          [ if String.contains "-" formatted then "-" else ""
+          , if String.contains "(" formatted then "(" else ""
+          , currencySymbol
+          , space
+          , String.slice 1 (String.length formatted) formatted
+          ] |> String.join ""
       else
-        lang.currency.symbol ++ space ++ formatted
+        currencySymbol ++ space ++ formatted
     else
       if String.contains ")" formatted then
-        -- TODO
-        ""
+        [ String.slice 0 (String.length formatted - 1) formatted
+        , space
+        , currencySymbol
+        , ")"
+        ] |> String.join ""
       else
-        formatted ++ space ++ lang.currency.symbol
+        formatted ++ space ++ currencySymbol
 
 
 formatWithoutPercent : String -> (String, String)
@@ -120,8 +155,11 @@ formatPercentage lang format value strValue =
     formatted = formatNumber lang format' value' (toString value')
   in
     if String.contains ")" formatted then
-      -- TODO
-      ""
+      [ String.slice 0 (String.length formatted - 1) formatted
+      , space
+      , "%"
+      , ")"
+      ] |> String.join ""
     else
       formatted ++ space ++ "%"
 
@@ -156,8 +194,10 @@ checkParensAndSign : String -> (String, Bool, Bool)
 checkParensAndSign format =
   if String.contains "(" format then
     (String.slice 1 -1 format, True, False)
-  else
+  else if String.contains "+" format then
     (emptyReplace "\\+" format, False, True)
+  else
+    (format, False, False)
 
 
 checkAbbreviation : Language -> String -> Float -> (String, String, Float)
@@ -189,6 +229,7 @@ checkAbbreviation lang format value =
       (format', abbr, value)
 
 
+checkByte : String -> Float -> (String, Float, String)
 checkByte format value =
   let
     (bytes, format') =
@@ -205,7 +246,7 @@ checkByte format value =
         if value >= minValue && value < maxValue then
           if minValue > 0 then
             (power, value / minValue)
-          else 
+          else
             (power, value)
         else if power < 10 then
           suffixIndex' (power + 1)
@@ -221,6 +262,8 @@ checkByte format value =
     else
       (format, value, "")
 
+
+checkOrdinal : Language -> String -> Float -> (String, String)
 checkOrdinal lang format value =
   let
     (ord, format') =
@@ -230,14 +273,15 @@ checkOrdinal lang format value =
         ("", emptyReplace "o" format)
   in
     if String.contains "o" format then
-      (format', ord ++ (toString value |> lang.ordinal))
+      (format', ord ++ (value |> lang.ordinal))
     else
       (format, "")
 
 
+checkOptionalDec : String -> (String, Bool)
 checkOptionalDec format =
   if String.contains "[.]" format then
-    (Regex.replace All (regex "[.]") (\_ -> ".") format, True)
+    (Regex.replace All ("[.]" |> Regex.escape |> regex) (\_ -> ".") format, True)
   else
     (format, False)
 
@@ -262,6 +306,19 @@ toFixed precision value =
     |> String.join "."
 
 
+toFixedWithOptional : List Int -> Float -> String
+toFixedWithOptional prs value =
+  case prs of
+    [x, y] ->
+      toFixed (x + y) value
+      |> emptyReplace ("0{1," ++ toString y ++ "}$")
+    [x] ->
+      toFixed x value
+    _ ->
+      toString value
+
+
+processPrecision : Language -> String -> Float -> String -> (String, String)
 processPrecision lang format value precision =
   let
     fst =
@@ -270,11 +327,9 @@ processPrecision lang format value precision =
         |> String.split "["
         |> List.map String.length
         |> List.take 2
-        |> List.sum
-        |> (flip toFixed) value
+        |> (flip toFixedWithOptional) value
       else
         toFixed (String.length precision) value
-        |> Debug.log "fixed"
     snd =
       case String.split "." fst of
         [x, y] ->
@@ -282,26 +337,24 @@ processPrecision lang format value precision =
             lang.delimiters.decimal ++ y
           else
             ""
-        _ -> 
+        _ ->
           ""
     w =
       String.split "." fst
       |> List.head
       |> Maybe.withDefault ""
-    
-  -- TODO!
   in
     if precision == "" then
-      (value |> toString |> String.split "." |> List.take 1 |> String.join "", "")
+      (w, "")
     else
-      (w, snd) |> Debug.log "" 
+      (w, snd)
 
 
-
+addThousandsDelimiter : Language -> String -> String
 addThousandsDelimiter lang word =
-  Regex.replace 
-    All 
-    (regex "(\\d)(?=(\\d{3})+(?!\\d))") 
+  Regex.replace
+    All
+    (regex "(\\d)(?=(\\d{3})+(?!\\d))")
     (\{match} -> match ++ lang.delimiters.thousands)
     word
 
@@ -310,7 +363,7 @@ formatNumber : NumberTypeFormatter
 formatNumber lang format value strValue =
   let
     (format', negP, signed) = checkParensAndSign format
-    (format'', abbr, value') = checkAbbreviation lang format' value |> Debug.log "abbr"
+    (format'', abbr, value') = checkAbbreviation lang format' value
     (format''', value'', bytes) = checkByte format'' value'
     -- this is a stupid mess...
     (format'''', ord) = checkOrdinal lang format''' value''
@@ -325,26 +378,60 @@ formatNumber lang format value strValue =
       |> List.drop 1
       |> List.head
       |> Maybe.withDefault ""
-      |> Debug.log "precision"
     (w', d) = processPrecision lang format value'' precision
-    w'' = 
+    d' =
+      let
+        result =
+          String.slice 1 (String.length d) d
+          |> String.toInt
+          |> Result.toMaybe
+          |> Maybe.withDefault 1
+      in
+        if optDec && result == 0 then
+          ""
+        else
+          d
+    w'' =
       if String.contains "," finalFormat then
         addThousandsDelimiter lang w'
       else
         w'
+    (w''', neg) =
+      if String.contains "-" w'' then
+        (String.slice 1 (String.length w'') w'', True)
+      else
+        (w'', False)
+    finalWord =
+      if indexOf "." finalFormat == 0 then
+        ""
+      else
+        w'''
+    parens =
+      if negP && neg then
+        ("(", ")")
+      else
+        ("", "")
+    minus =
+      if (not negP) && neg then
+        "-"
+      else
+        ""
+    plus =
+      if (not neg) && signed then
+        "+"
+      else
+        ""
   in
-    {-
-    ((negP && neg) ? '(' : '') + 
-    ((!negP && neg) ? '-' : '') + 
-    ((!neg && signed) ? '+' : '') + 
-    w + 
-    d + 
-    ((ord) ? ord : '') + 
-    ((abbr) ? abbr : '') + 
-    ((bytes) ? bytes : '') + 
-    ((negP && neg) ? ')' : '');
-    -}
-    w'' ++ d ++ ord ++ abbr ++ bytes
+    [ fst parens
+    , minus
+    , plus
+    , finalWord
+    , d'
+    , ord
+    , abbr
+    , bytes
+    , snd parens
+    ] |> String.join ""
 
 
 formatWithLanguage : Language -> String -> Float -> String
