@@ -3,69 +3,8 @@ module Numeral where
 import String
 import Array exposing (Array)
 import Regex exposing (HowMany(All), regex)
-
-
-type alias Delimiters =
-  { thousands:String
-  , decimal:String
-  }
-
-type alias Abbreviations =
-  { thousand:String
-  , million:String
-  , billion:String
-  , trillion:String
-  }
-
-type alias Ordinal = Float -> String
-
-type alias Currency =
-  { symbol:String
-  }
-
-type alias Language =
-  { delimiters:Delimiters
-  , abbreviations:Abbreviations
-  , ordinal:Ordinal
-  , currency:Currency
-  }
-
-
-englishOrdinal : Ordinal
-englishOrdinal number =
-  let
-    number' = floor number
-    b = number' % 10
-  in
-    if floor (toFloat (number' % 100) / 10) == 1 then
-      "th"
-    else if b == 1 then
-      "st"
-    else if b == 2 then
-      "nd"
-    else if b == 3 then
-      "rd"
-    else
-      "th"
-
-enLang : Language
-enLang =
-  { delimiters=
-    { thousands=","
-    , decimal="."
-    }
-  , abbreviations=
-    { thousand="k"
-    , million="m"
-    , billion="b"
-    , trillion="t"
-    }
-  -- TODO!
-  , ordinal=englishOrdinal
-  , currency=
-    { symbol="$"
-    }
-  }
+import Language exposing (..)
+import Languages.English as English
 
 
 type alias NumberTypeFormatter =
@@ -116,7 +55,7 @@ formatCurrency lang format value strValue =
           [ currencySymbol
           , space
           , if String.contains "-" formatted then "-" else ""
-          , if String.contains "(" formatted then "(" else ""
+          , if String.contains "(" formatted then "(" else ""          
           , String.slice 1 (String.length formatted) formatted
           ] |> String.join ""
         else
@@ -246,7 +185,7 @@ checkByte format value =
         if value >= minValue && value < maxValue then
           if minValue > 0 then
             (power, value / minValue)
-          else
+          else 
             (power, value)
         else if power < 10 then
           suffixIndex' (power + 1)
@@ -337,7 +276,7 @@ processPrecision lang format value precision =
             lang.delimiters.decimal ++ y
           else
             ""
-        _ ->
+        _ -> 
           ""
     w =
       String.split "." fst
@@ -352,9 +291,9 @@ processPrecision lang format value precision =
 
 addThousandsDelimiter : Language -> String -> String
 addThousandsDelimiter lang word =
-  Regex.replace
-    All
-    (regex "(\\d)(?=(\\d{3})+(?!\\d))")
+  Regex.replace 
+    All 
+    (regex "(\\d)(?=(\\d{3})+(?!\\d))") 
     (\{match} -> match ++ lang.delimiters.thousands)
     word
 
@@ -363,7 +302,7 @@ formatNumber : NumberTypeFormatter
 formatNumber lang format value strValue =
   let
     (format', negP, signed) = checkParensAndSign format
-    (format'', abbr, value') = checkAbbreviation lang format' value
+    (format'', abbr, value') = checkAbbreviation lang format' value 
     (format''', value'', bytes) = checkByte format'' value'
     -- this is a stupid mess...
     (format'''', ord) = checkOrdinal lang format''' value''
@@ -379,7 +318,7 @@ formatNumber lang format value strValue =
       |> List.head
       |> Maybe.withDefault ""
     (w', d) = processPrecision lang format value'' precision
-    d' =
+    d' = 
       let
         result =
           String.slice 1 (String.length d) d
@@ -391,17 +330,17 @@ formatNumber lang format value strValue =
           ""
         else
           d
-    w'' =
+    w'' = 
       if String.contains "," finalFormat then
         addThousandsDelimiter lang w'
       else
         w'
-    (w''', neg) =
+    (w''', neg) = 
       if String.contains "-" w'' then
         (String.slice 1 (String.length w'') w'', True)
       else
         (w'', False)
-    finalWord =
+    finalWord = 
       if indexOf "." finalFormat == 0 then
         ""
       else
@@ -424,11 +363,11 @@ formatNumber lang format value strValue =
   in
     [ fst parens
     , minus
-    , plus
+    , plus 
     , finalWord
     , d'
-    , ord
-    , abbr
+    , ord 
+    , abbr 
     , bytes
     , snd parens
     ] |> String.join ""
@@ -452,4 +391,4 @@ formatWithLanguage lang format value =
 
 format : String -> Float -> String
 format =
-  formatWithLanguage enLang
+  formatWithLanguage English.lang
