@@ -1,4 +1,9 @@
-module Languages.French where
+module Languages.French (lang) where
+
+{-| French language configuration.
+
+@docs lang
+-}
 
 import Language exposing (..)
 
@@ -11,6 +16,26 @@ frenchOrdinal number =
     "e"
 
 
+{-| Configuration data.
+
+    lang =
+      { delimiters=
+        { thousands=" "
+        , decimal=","
+        }
+      , abbreviations=
+        { thousand="k"
+        , million="m"
+        , billion="b"
+        , trillion="t"
+        }
+      , ordinal=frenchOrdinal
+      , currency=
+        { symbol="€"
+        }
+      }
+
+-}
 lang : Language
 lang =
   { delimiters=

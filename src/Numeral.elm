@@ -1,4 +1,14 @@
-module Numeral where
+module Numeral (format, formatWithLanguage) where
+
+{-| Elm module for (advanced) number formatting. It is a direct port of [Numeral.js](http://numeraljs.com/) and it is possible to use the same format strings. Manipulation and unformatting of numbers is not yet supported.
+
+If you create a new language-file, please let me know or send a pull request.
+
+# Formatting
+
+@docs format, formatWithLanguage
+
+-}
 
 import String
 import Array exposing (Array)
@@ -373,6 +383,14 @@ formatNumber lang format value strValue =
     ] |> String.join ""
 
 
+{-| Format a number with a given language.
+
+    import Language.Japanese as Japanese
+
+    myFormat = formatWithLanguage Japanese.lang "0.0a"
+
+    -- map myFormat [10123.12, 235798239.3242] == ["10.1千","235.8百万"]
+-}
 formatWithLanguage : Language -> String -> Float -> String
 formatWithLanguage lang format value =
   let
@@ -389,6 +407,10 @@ formatWithLanguage lang format value =
     numberType lang format value (toString value)
 
 
+{-| Same as formatWithLanguage, but English is set as default language.
+
+    format "$0,0.00" 1000.234 == "$1,000.23"
+-}
 format : String -> Float -> String
 format =
   formatWithLanguage English.lang

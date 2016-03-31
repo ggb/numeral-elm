@@ -1,4 +1,9 @@
-module Languages.English where
+module Languages.English (lang) where
+
+{-| English language configuration.
+
+@docs lang
+-}
 
 import Language exposing (..)
 
@@ -20,6 +25,26 @@ englishOrdinal number =
     else
       "th"
 
+
+{-| Configuration data.
+
+    lang =
+      { delimiters=
+        { thousands=","
+        , decimal="."
+        }
+      , abbreviations=
+        { thousand="k"
+        , million="m"
+        , billion="b"
+        , trillion="t"
+        }
+      , ordinal=englishOrdinal
+      , currency=
+        { symbol="$"
+        }
+      }
+-}
 lang : Language
 lang =
   { delimiters=
