@@ -1,4 +1,4 @@
-module Languages.Japanese (lang) where
+module Languages.Japanese exposing(lang)
 
 {-| Japanese language configuration.
 
@@ -14,7 +14,7 @@ japaneseOrdinal number =
 
 
 {-| Configuration data.
-  
+
     lang =
       { delimiters=
         { thousands=","

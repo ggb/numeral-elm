@@ -1,4 +1,4 @@
-module Languages.German (lang) where
+module Languages.German exposing(lang)
 
 {-| German language configuration.
 

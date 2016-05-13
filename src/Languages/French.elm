@@ -1,4 +1,4 @@
-module Languages.French (lang) where
+module Languages.French exposing(lang)
 
 {-| French language configuration.
 

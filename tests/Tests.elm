@@ -1,7 +1,8 @@
-import Graphics.Element exposing (Element)
 import Numeral
 
+import Html exposing(..)
 import ElmTest exposing (..)
+import String
 
 numbers =
   [
@@ -147,8 +148,8 @@ timeTest =
 --  |> suite "Tests for rounding"
 
 
-main : Element
-main =
+tests : String
+tests =
   suite "Numeral"
       [ numbersTest
       , currencyTest
@@ -156,4 +157,18 @@ main =
       , percentagesTest
       , timeTest
       ]
-  |> elementRunner
+  |> stringRunner
+
+main : Html String
+main =
+  let
+    lines = String.lines tests
+  in
+    div [ ] (List.map (\s -> line s) lines)
+
+line : String -> Html String
+line s =
+  div [ ] [
+    text s,
+    br [ ] [ ]
+  ]

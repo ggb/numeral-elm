@@ -1,4 +1,4 @@
-module Language (Language, Ordinal) where
+module Language exposing(Language, Ordinal)
 
 {-| Type definition for language configurations.
 

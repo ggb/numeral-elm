@@ -1,4 +1,4 @@
-module Languages.Italian (lang) where
+module Languages.Italian exposing(lang)
 
 {-| Italian language configuration.
 

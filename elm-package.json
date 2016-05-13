@@ -1,5 +1,5 @@
 {
-    "version": "1.1.1",
+    "version": "1.1.2",
     "summary": "Elm module for (advanced) number formatting. Numeral.js port to Elm",
     "repository": "https://github.com/ggb/numeral-elm.git",
     "license": "MIT",
@@ -16,7 +16,8 @@
         "Languages.Italian"
     ],
     "dependencies": {
-        "elm-lang/core": "3.0.0 <= v < 4.0.0"
+        "elm-lang/core": "4.0.0 <= v < 5.0.0",
+        "evancz/elm-graphics": "1.0.0 <= v < 2.0.0"
     },
-    "elm-version": "0.16.0 <= v < 0.17.0"
+    "elm-version": "0.17.0 <= v < 0.18.0"
 }
