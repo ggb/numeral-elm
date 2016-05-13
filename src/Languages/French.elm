@@ -1,6 +1,6 @@
-module Languages.German (lang) where
+module Languages.French exposing(lang)
 
-{-| German language configuration.
+{-| French language configuration.
 
 @docs lang
 -}
@@ -8,9 +8,12 @@ module Languages.German (lang) where
 import Language exposing (..)
 
 
-germanOrdinal : Ordinal
-germanOrdinal number =
-  "."
+frenchOrdinal : Ordinal
+frenchOrdinal number =
+  if (floor number) == 1 then
+    "er"
+  else
+    "e"
 
 
 {-| Configuration data.
@@ -26,11 +29,12 @@ germanOrdinal number =
         , billion="b"
         , trillion="t"
         }
-      , ordinal=germanOrdinal
+      , ordinal=frenchOrdinal
       , currency=
         { symbol="€"
         }
       }
+
 -}
 lang : Language
 lang =
@@ -44,7 +48,7 @@ lang =
     , billion="b"
     , trillion="t"
     }
-  , ordinal=germanOrdinal
+  , ordinal=frenchOrdinal
   , currency=
     { symbol="€"
     }
