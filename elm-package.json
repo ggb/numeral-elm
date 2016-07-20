@@ -1,5 +1,5 @@
 {
-    "version": "1.2.0",
+    "version": "1.2.1",
     "summary": "Elm module for (advanced) number formatting. Numeral.js port to Elm",
     "repository": "https://github.com/ggb/numeral-elm.git",
     "license": "MIT",

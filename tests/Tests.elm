@@ -113,6 +113,12 @@ rounding =
     (-0.433,"0 %","-44 %", "-43 %")
   ]
 -}
+rounding =
+  [
+    (2.385, "0,0.00", "2.39"),
+    (28.885, "0,0.00", "28.89")
+  ]
+
 
 myAssert (value, format, result) =
   defaultTest (assertEqual result (Numeral.format format value))
@@ -143,9 +149,9 @@ timeTest =
   |> suite "Tests for time"
 
 
---roundingTest =
---  List.map myAssert rounding
---  |> suite "Tests for rounding"
+roundingTest =
+  List.map myAssert rounding
+  |> suite "Tests for rounding"
 
 
 tests : String
@@ -156,6 +162,7 @@ tests =
       , bytesTest
       , percentagesTest
       , timeTest
+      , roundingTest
       ]
   |> stringRunner
 

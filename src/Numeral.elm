@@ -248,7 +248,7 @@ toFixed precision value =
         val ->
           val
   in
-    (round (value * power) |> toFloat) / power
+    (round (value * power + 0.01) |> toFloat) / power
     |> toString
     |> String.split "."
     |> pad
