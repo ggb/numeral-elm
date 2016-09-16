@@ -235,6 +235,22 @@ checkOptionalDec format =
     (format, False)
 
 
+checkForCustomSuffix : String -> (String, String)
+checkForCustomSuffix format =
+  let
+    hasSuffix = 
+      Regex.find All (regex "\\[\\D+\\]$") format
+      |> List.head
+  in
+    case hasSuffix of
+      Nothing ->
+        (format, "")
+      Just {match} ->
+        (,)
+          (Regex.replace All (match |> Regex.escape |> regex) (\_ -> "") format)
+          (Regex.replace All (regex "\\[|\\]") (\_ -> "") match)
+
+
 toFixed : Int -> Float -> String
 toFixed precision value =
   let
@@ -312,11 +328,12 @@ formatNumber : NumberTypeFormatter
 formatNumber lang format value strValue =
   let
     (format', negP, signed) = checkParensAndSign format
-    (format'', abbr, value') = checkAbbreviation lang format' value
-    (format''', value'', bytes) = checkByte format'' value'
     -- this is a stupid mess...
-    (format'''', ord) = checkOrdinal lang format''' value''
-    (finalFormat, optDec) = checkOptionalDec format''''
+    (format'', customSuffix) = checkForCustomSuffix format'
+    (format''', abbr, value') = checkAbbreviation lang format'' value
+    (format'''', value'', bytes) = checkByte format''' value'    
+    (format''''', ord) = checkOrdinal lang format'''' value''    
+    (finalFormat, optDec) = checkOptionalDec format''''' 
     strValue' = toString value''
     w =
       String.split "." strValue'
@@ -379,6 +396,7 @@ formatNumber lang format value strValue =
     , ord
     , abbr
     , bytes
+    , customSuffix
     , snd parens
     ] |> String.join ""
 
