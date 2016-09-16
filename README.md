@@ -9,7 +9,7 @@ If you create a new language-file, please let me know or send a pull request.
 Format a number with a given language.
 
 ```elm
-import Language.Japanese as Japanese
+import Languages.Japanese as Japanese
 
 myFormat = formatWithLanguage Japanese.lang "0.0a"
 
