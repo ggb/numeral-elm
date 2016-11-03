@@ -102,6 +102,17 @@ times =
     (63846,"00:00:00","17:44:06")
   ]
 
+
+customUnitSuffix = 
+  [
+    (12345,"0,0[ pcs.]","12,345 pcs."),
+    (12345,"0,0[pcs.]","12,345pcs."),
+    (300000, "0,0 [ ponies]", "300,000 ponies"),
+    (22, "0.00[ blobs]", "22.00 blobs"),
+    (4, "0[ ants]", "4 ants")
+  ]
+
+
 {-
 rounding =
   [
@@ -154,6 +165,11 @@ roundingTest =
   |> suite "Tests for rounding"
 
 
+customUnitSuffixTest =
+  List.map myAssert customUnitSuffix
+  |> suite "Tests for custom suffixes"
+
+
 tests : Test
 tests =
   suite "Numeral"
@@ -163,4 +179,5 @@ tests =
       , percentagesTest
       , timeTest
       , roundingTest
+      , customUnitSuffixTest
       ]

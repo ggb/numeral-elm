@@ -3,6 +3,8 @@ module BrowserRunner exposing (..)
 import String
 import Html exposing(..)
 import Tests exposing (tests)
+import ElmTest exposing (stringRunner)
+
 
 main : Html String
 main =
