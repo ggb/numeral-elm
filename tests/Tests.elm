@@ -1,10 +1,17 @@
-module Tests exposing (tests)
+module Tests exposing (..)
 
+import Test exposing (..)
+import Expect
 import Numeral
-import ElmTest exposing (..)
 
 
+type alias CaseCollection = (String, List Case)
+type alias Case = (Float, String, String)
+
+
+numbers : CaseCollection
 numbers =
+  (,) "Numbers"
   [
     (10000,"0,0.0000","10,000.0000"),
     (10000.23,"0,0","10,000"),
@@ -46,7 +53,9 @@ numbers =
   ]
 
 
+currency : CaseCollection
 currency =
+  (,) "Currency"
   [
     (1000.234,"$0,0.00","$1,000.23"),
     (1001,"$ 0,0.[00]","$ 1,001"),
@@ -75,7 +84,9 @@ currency =
   ]
 
 
+bytes : CaseCollection
 bytes =
+  (,) "Bytes"
   [
     (100,"0b","100B"),
     (1024*2,"0 b","2 KB"),
@@ -86,7 +97,9 @@ bytes =
   ]
 
 
+percentages : CaseCollection
 percentages =
+  (,) "Percentages"
   [
     (1,"0%","100%"),
     (0.974878234,"0.000%","97.488%"),
@@ -95,7 +108,9 @@ percentages =
   ]
 
 
+times : CaseCollection
 times =
+  (,) "Times"
   [
     (25,"00:00:00","0:00:25"),
     (238,"00:00:00","0:03:58"),
@@ -103,7 +118,9 @@ times =
   ]
 
 
+customUnitSuffix : CaseCollection
 customUnitSuffix = 
+  (,) "Custom Unit Suffix"
   [
     (12345,"0,0[ pcs.]","12,345 pcs."),
     (12345,"0,0[pcs.]","12,345pcs."),
@@ -113,71 +130,28 @@ customUnitSuffix =
   ]
 
 
-{-
+rounding : CaseCollection
 rounding =
-  [
-    -- value, format string, expected w/ floor, expected w/ ceil
-    (2280002, "0.00a", "2.28m", "2.29m"),
-    (10000.23,"0,0","10,000", "10,001"),
-    (1000.234,"$0,0.00","$1,000.23", "$1,000.24"),
-    (0.974878234,"0.000%","97.487%","97.488%"),
-    (-0.433,"0 %","-44 %", "-43 %")
-  ]
--}
-rounding =
+  (,) "Rounding"
   [
     (2.385, "0,0.00", "2.39"),
     (28.885, "0,0.00", "28.89")
   ]
 
 
-myAssert (value, format, result) =
-  defaultTest (assertEqual result (Numeral.format format value))
+createTest : Case -> Test
+createTest (source, format, expected) = 
+  test (expected ++ " == " ++ "Numeral.format " ++ format ++ " " ++ (toString source)) <|
+    \() -> 
+        Expect.equal expected (Numeral.format format source)
 
 
-numbersTest =
-  List.map myAssert numbers
-  |> suite "Tests for numbers"
+createSuite : CaseCollection -> Test
+createSuite (suiteName, cases) = 
+  describe suiteName (List.map createTest cases)
 
 
-currencyTest =
-  List.map myAssert currency
-  |> suite "Tests for currency"
-
-
-bytesTest =
-  List.map myAssert bytes
-  |> suite "Tests for bytes"
-
-
-percentagesTest =
-  List.map myAssert percentages
-  |> suite "Tests for percentages"
-
-
-timeTest =
-  List.map myAssert times
-  |> suite "Tests for time"
-
-
-roundingTest =
-  List.map myAssert rounding
-  |> suite "Tests for rounding"
-
-
-customUnitSuffixTest =
-  List.map myAssert customUnitSuffix
-  |> suite "Tests for custom suffixes"
-
-
-tests : Test
-tests =
-  suite "Numeral"
-      [ numbersTest
-      , currencyTest
-      , bytesTest
-      , percentagesTest
-      , timeTest
-      , roundingTest
-      , customUnitSuffixTest
-      ]
+all : Test
+all =
+  describe "Numeral Tests"
+    (List.map createSuite [numbers, currency, rounding, bytes, percentages, times, customUnitSuffix])
