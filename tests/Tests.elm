@@ -1,8 +1,8 @@
-import Numeral
+module Tests exposing (tests)
 
-import Html exposing(..)
+import Numeral
 import ElmTest exposing (..)
-import String
+
 
 numbers =
   [
@@ -154,7 +154,7 @@ roundingTest =
   |> suite "Tests for rounding"
 
 
-tests : String
+tests : Test
 tests =
   suite "Numeral"
       [ numbersTest
@@ -164,18 +164,3 @@ tests =
       , timeTest
       , roundingTest
       ]
-  |> stringRunner
-
-main : Html String
-main =
-  let
-    lines = String.lines tests
-  in
-    div [ ] (List.map (\s -> line s) lines)
-
-line : String -> Html String
-line s =
-  div [ ] [
-    text s,
-    br [ ] [ ]
-  ]
