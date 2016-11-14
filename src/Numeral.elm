@@ -100,8 +100,8 @@ formatCurrency lang format value strValue =
     symbolIndex = indexOf "$" format
     openParenIndex = indexOf "(" format
     minusSignIndex = indexOf "-" format
-    (space, format') = formatWithoutCurrency format
-    formatted = formatNumber (empty lang format' value)
+    (space, format1) = formatWithoutCurrency format
+    formatted = formatNumber (empty lang format1 value)
     currencySymbol = lang.currency.symbol
   in
     if symbolIndex <= 1 then
@@ -144,9 +144,9 @@ formatWithoutPercent format =
 formatPercentage : Language -> String -> Float -> String -> String
 formatPercentage lang format value strValue =
   let
-    value' = value * 100
-    (space, format') = formatWithoutPercent format
-    formatted = formatNumber (empty lang format' value')
+    value1 = value * 100
+    (space, format1) = formatWithoutPercent format
+    formatted = formatNumber (empty lang format1 value1)
   in
     if String.contains ")" formatted then
       [ String.slice 0 (String.length formatted - 1) formatted
@@ -204,7 +204,7 @@ checkAbbreviation numeral =
     abbrT = String.contains "aT" format
     abbrForce = abbrK || abbrM || abbrB || abbrT |> not
     absValue = abs value
-    (abbr, format') =
+    (abbr, format1) =
       if String.contains " a" format then
         (" ", emptyReplace " a" format)
       else
@@ -213,28 +213,28 @@ checkAbbreviation numeral =
     if not <| String.contains "a" format then
       numeral
     else if absValue >= 10^12 && abbrForce || abbrT then
-      {numeral | format=format', abbreviation=abbr ++ language.abbreviations.trillion, value=value / 10^12}
+      {numeral | format=format1, abbreviation=abbr ++ language.abbreviations.trillion, value=value / 10^12}
     else if absValue < 10^12 && absValue >= 10^9 && abbrForce || abbrB then
-      {numeral | format=format', abbreviation=abbr ++ language.abbreviations.billion, value=value / 10^9}
+      {numeral | format=format1, abbreviation=abbr ++ language.abbreviations.billion, value=value / 10^9}
     else if absValue < 10^9 && absValue >= 10^6 && abbrForce || abbrM then
-      {numeral | format=format', abbreviation=abbr ++ language.abbreviations.million, value=value / 10^6}
+      {numeral | format=format1, abbreviation=abbr ++ language.abbreviations.million, value=value / 10^6}
     else if absValue < 10^6 && absValue >= 10^3 && abbrForce || abbrK then
-      {numeral | format=format', abbreviation=abbr ++ language.abbreviations.thousand, value=value / 10^3}
+      {numeral | format=format1, abbreviation=abbr ++ language.abbreviations.thousand, value=value / 10^3}
     else
-      {numeral | format=format', abbreviation=abbr}
+      {numeral | format=format1, abbreviation=abbr}
 
 
 checkByte : Numeral -> Numeral
 checkByte numeral =
   let
     {format, value} = numeral
-    (bytes, format') =
+    (bytes, format1) =
       if String.contains " b" format then
         (" ", emptyReplace " b" format)
       else
         ("", emptyReplace "b" format)
 
-    suffixIndex' power =
+    suffixIndex1 power =
       let
         minValue = 1024^power
         maxValue = 1024^(power + 1)
@@ -245,16 +245,16 @@ checkByte numeral =
           else
             (power, value)
         else if power < 10 then
-          suffixIndex' (power + 1)
+          suffixIndex1 (power + 1)
         else
             (-1, value)
-    (suffixIndex, value') = suffixIndex' 0
+    (suffixIndex, value1) = suffixIndex1 0
     suffix =
       Array.get suffixIndex suffixes
       |> Maybe.withDefault ""
   in
     if String.contains "b" format then
-      {numeral | format=format', value=value', bytes=bytes ++ suffix}
+      {numeral | format=format1, value=value1, bytes=bytes ++ suffix}
     else
       numeral
 
@@ -263,14 +263,14 @@ checkOrdinal : Numeral -> Numeral
 checkOrdinal numeral =
   let
     {language, format, value} = numeral
-    (ord, format') =
+    (ord, format1) =
       if String.contains " o" format then
         (" ", emptyReplace " o" format)
       else
         ("", emptyReplace "o" format)
   in
     if String.contains "o" format then
-      {numeral | format=format', ordinal=ord ++ (value |> numeral.language.ordinal)}
+      {numeral | format=format1, ordinal=ord ++ (value |> numeral.language.ordinal)}
     else
       numeral
 
@@ -471,7 +471,7 @@ hasPlus numeral =
 
 createFinalString : Numeral -> String
 createFinalString {parens,minus,plus,word,decimal,ordinal,abbreviation,bytes,customSuffix} =
-  [ fst parens
+  [ Tuple.first parens
   , minus
   , plus
   , word
@@ -480,7 +480,7 @@ createFinalString {parens,minus,plus,word,decimal,ordinal,abbreviation,bytes,cus
   , abbreviation
   , bytes
   , customSuffix
-  , snd parens
+  , Tuple.second parens
   ] |> String.join ""
 
 

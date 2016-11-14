@@ -11,10 +11,10 @@ import Language exposing (..)
 englishOrdinal : Ordinal
 englishOrdinal number =
   let
-    number' = floor number
-    b = number' % 10
+    number1 = floor number
+    b = number1 % 10
   in
-    if floor (toFloat (number' % 100) / 10) == 1 then
+    if floor (toFloat (number1 % 100) / 10) == 1 then
       "th"
     else if b == 1 then
       "st"
