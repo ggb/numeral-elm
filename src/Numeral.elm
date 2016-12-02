@@ -38,6 +38,7 @@ type alias Numeral =
   , optionalDecimal: Bool
   , parens: (String, String)
   , precision: String
+  , leadingZeros: Int
   , minus: String
   , plus: String
   }
@@ -61,6 +62,7 @@ empty lang format value =
   , optionalDecimal=False
   , parens=("","")
   , precision=""
+  , leadingZeros=0
   , minus=""
   , plus=""
   }
@@ -394,13 +396,42 @@ processWord numeral =
 getPrecision : Numeral -> Numeral
 getPrecision numeral =
   let
-    precision =
+    splitted =
       String.split "." numeral.format
+    leadingZeros = 
+      splitted
+      |> List.head
+      |> Maybe.withDefault ""
+      |> String.length
+    leadingZeros_ =
+      if String.contains "," numeral.format then
+        0
+      else
+        leadingZeros 
+    precision =
+      splitted
       |> List.drop 1
       |> List.head
       |> Maybe.withDefault ""
   in
-    {numeral | precision=precision}
+    {numeral | precision=precision, leadingZeros=leadingZeros_}
+
+
+processLeadingZeros : Numeral -> Numeral
+processLeadingZeros numeral =
+  let
+    w = 
+      numeral.word
+      |> String.split "."
+      |> List.head
+      |> Maybe.withDefault ""
+      |> String.length
+    n =
+      numeral.leadingZeros - w
+    prefix =
+      String.repeat n "0"
+  in
+    {numeral | word=prefix++numeral.word}
 
 
 processDecimal : Numeral -> Numeral
@@ -497,6 +528,7 @@ formatNumber numeral =
   |> processWord
   |> getPrecision
   |> processPrecision
+  |> processLeadingZeros
   |> processDecimal
   |> checkThousandsDelimiter
   |> checkIfNegative
