@@ -14,7 +14,8 @@
         "Languages.German",
         "Languages.French",
         "Languages.Japanese",
-        "Languages.Italian"
+        "Languages.Italian",
+        "Languages.Russian"
     ],
     "dependencies": {
         "elm-lang/core": "5.0.0 <= v < 6.0.0"
