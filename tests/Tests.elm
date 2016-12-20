@@ -139,6 +139,22 @@ rounding =
   ]
 
 
+leadingZeros : CaseCollection
+leadingZeros =
+  (,) "Leading Zeros"
+  [
+    (12, "000", "012"),
+    (1.932,"000.0","001.9"),
+    (1.9687,"0000","0002"),
+    (22, "000.00[ blobs]", "022.00 blobs"),
+    (1230974,"($00.00 a)","$01.23 m"),
+    (1,"000%","100%"),
+    (0.974878234,"000.000%","097.488%"),
+    (1024*2,"000 b","002 KB"),
+    (1024*1024*5,"000b","005MB")
+  ]
+
+
 createTest : Case -> Test
 createTest (source, format, expected) = 
   test (expected ++ " == " ++ "Numeral.format " ++ format ++ " " ++ (toString source)) <|
@@ -154,4 +170,12 @@ createSuite (suiteName, cases) =
 all : Test
 all =
   describe "Numeral Tests"
-    (List.map createSuite [numbers, currency, rounding, bytes, percentages, times, customUnitSuffix])
+    (List.map createSuite 
+      [ numbers
+      , currency
+      , rounding
+      , bytes
+      , percentages
+      , times
+      , customUnitSuffix
+      , leadingZeros])
