@@ -1,5 +1,3 @@
-[ ![Codeship Status for ggb/numeral-elm](https://codeship.com/projects/f4ffde60-8427-0134-d486-12c4a3847234/status?branch=master)](https://codeship.com/projects/183086)
-
 # numeral-elm
 
 Elm module for (advanced) number formatting. It is a direct port of [Numeral.js](http://numeraljs.com/) and it is possible to use the same format strings. Manipulation and unformatting of numbers is not yet supported.
