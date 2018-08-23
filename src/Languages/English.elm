@@ -12,10 +12,10 @@ englishOrdinal : Ordinal
 englishOrdinal number =
   let
     number1 = floor number
-    b = number1 % 10
+    b = modBy number1 10
   in
-    if floor (toFloat (number1 % 100) / 10) == 1 then
-      "th"
+    if floor (toFloat (modBy number1 100) / 10) == 1 then
+        "th"
     else if b == 1 then
       "st"
     else if b == 2 then

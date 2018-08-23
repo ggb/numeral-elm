@@ -10,11 +10,11 @@ If you create a new language-file, please let me know or send a pull request.
 
 -}
 
-import String
 import Array exposing (Array)
-import Regex exposing (HowMany(All), regex)
 import Language exposing (..)
 import Languages.English as English
+import Regex exposing (..)
+import String
 
 
 type alias NumberTypeFormatter =
@@ -23,7 +23,7 @@ type alias NumberTypeFormatter =
 
 type alias Numeral = 
   { language: Language
-  , format: String
+  , format_value: String
   , value: Float
   , word: String
   , strValue: String
@@ -45,12 +45,12 @@ type alias Numeral =
 
 
 empty : Language -> String -> Float -> Numeral
-empty lang format value = 
+empty lang format_val value = 
   { language=lang
-  , format=format
+  , format_value=format_val
   , value=value
   , word=""
-  , strValue=toString value
+  , strValue=String.fromFloat value
   , signed=False
   , neg=False
   , negP=False
@@ -68,6 +68,11 @@ empty lang format value =
   }
 
 
+regex : String -> Regex
+regex str =
+  Maybe.withDefault Regex.never <|
+    Regex.fromString str 
+    
 suffixes : Array String
 suffixes =
   ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
@@ -83,26 +88,26 @@ indexOf part word  =
 
 emptyReplace : String -> String -> String
 emptyReplace str =
-  Regex.replace All (regex str) (\_ -> "")
+  Regex.replace (regex str) (\_ -> "")
 
 
 formatWithoutCurrency : String -> (String, String)
-formatWithoutCurrency format =
-  if String.contains " $" format then
-    (" ", emptyReplace " \\$" format)
-  else if String.contains "$ " format then
-    (" ", emptyReplace "\\$ " format)
+formatWithoutCurrency lformat =
+  if String.contains " $" lformat then
+    (" ", emptyReplace " \\$" lformat)
+  else if String.contains "$ " lformat then
+    (" ", emptyReplace "\\$ " lformat)
   else
-    ("", emptyReplace "\\$" format)
+    ("", emptyReplace "\\$" lformat)
 
 
 formatCurrency : NumberTypeFormatter
-formatCurrency lang format value strValue =
+formatCurrency lang lformat value strValue =
   let
-    symbolIndex = indexOf "$" format
-    openParenIndex = indexOf "(" format
-    minusSignIndex = indexOf "-" format
-    (space, format1) = formatWithoutCurrency format
+    symbolIndex = indexOf "$" lformat
+    openParenIndex = indexOf "(" lformat
+    minusSignIndex = indexOf "-" lformat
+    (space, format1) = formatWithoutCurrency lformat
     formatted = formatNumber (empty lang format1 value)
     currencySymbol = lang.currency.symbol
   in
@@ -136,18 +141,18 @@ formatCurrency lang format value strValue =
 
 
 formatWithoutPercent : String -> (String, String)
-formatWithoutPercent format =
-  if String.contains " %" format then
-    (" ", emptyReplace " %" format)
+formatWithoutPercent lformat =
+  if String.contains " %" lformat then
+    (" ", emptyReplace " %" lformat)
   else
-    ("", emptyReplace "%" format)
+    ("", emptyReplace "%" lformat)
 
 
 formatPercentage : Language -> String -> Float -> String -> String
-formatPercentage lang format value strValue =
+formatPercentage lang lformat value strValue =
   let
     value1 = value * 100
-    (space, format1) = formatWithoutPercent format
+    (space, format1) = formatWithoutPercent lformat
     formatted = formatNumber (empty lang format1 value1)
   in
     if String.contains ")" formatted then
@@ -161,7 +166,7 @@ formatPercentage lang format value strValue =
 
 
 formatTime : NumberTypeFormatter
-formatTime lang format value strValue =
+formatTime lang lformat value strValue =
   let
     hasOneDigit val =
       if String.length val < 2 then
@@ -180,18 +185,18 @@ formatTime lang format value strValue =
       (value - (hours * 60 * 60) - (minutes * 60))
       |> round
   in
-    [ (hours |> toString)
-    , (minutes |> toString |> hasOneDigit)
-    , (seconds |> toString |> hasOneDigit)
+    [ (hours |> String.fromFloat)
+    , (minutes |> String.fromFloat |> hasOneDigit)
+    , (seconds |> String.fromInt |> hasOneDigit)
     ] |> String.join ":"
 
 
 checkParensAndSign : Numeral -> Numeral
 checkParensAndSign numeral =
-  if String.contains "(" numeral.format then
-    {numeral | format = String.slice 1 -1 numeral.format, negP=True, signed=False}
-  else if String.contains "+" numeral.format then
-    {numeral | format = emptyReplace "\\+" numeral.format, negP=False, signed=True}
+  if String.contains "(" numeral.format_value then
+    {numeral | format_value = String.slice 1 -1 numeral.format_value, negP=True, signed=False}
+  else if String.contains "+" numeral.format_value then
+    {numeral | format_value = emptyReplace "\\+" numeral.format_value, negP=False, signed=True}
   else
     numeral
 
@@ -199,42 +204,42 @@ checkParensAndSign numeral =
 checkAbbreviation : Numeral -> Numeral
 checkAbbreviation numeral =
   let
-    {language, format, value} = numeral
-    abbrK = String.contains "aK" format
-    abbrM = String.contains "aM" format
-    abbrB = String.contains "aB" format
-    abbrT = String.contains "aT" format
+    {language, format_value, value} = numeral
+    abbrK = String.contains "aK" format_value
+    abbrM = String.contains "aM" format_value
+    abbrB = String.contains "aB" format_value
+    abbrT = String.contains "aT" format_value
     abbrForce = abbrK || abbrM || abbrB || abbrT |> not
     absValue = abs value
     (abbr, format1) =
-      if String.contains " a" format then
-        (" ", emptyReplace " a" format)
+      if String.contains " a" format_value then
+        (" ", emptyReplace " a" format_value)
       else
-        ("", emptyReplace "a" format)
+        ("", emptyReplace "a" format_value)
   in
-    if not <| String.contains "a" format then
+    if not <| String.contains "a" format_value then
       numeral
     else if absValue >= 10^12 && abbrForce || abbrT then
-      {numeral | format=format1, abbreviation=abbr ++ language.abbreviations.trillion, value=value / 10^12}
+      {numeral | format_value=format1, abbreviation=abbr ++ language.abbreviations.trillion, value=value / 10^12}
     else if absValue < 10^12 && absValue >= 10^9 && abbrForce || abbrB then
-      {numeral | format=format1, abbreviation=abbr ++ language.abbreviations.billion, value=value / 10^9}
+      {numeral | format_value=format1, abbreviation=abbr ++ language.abbreviations.billion, value=value / 10^9}
     else if absValue < 10^9 && absValue >= 10^6 && abbrForce || abbrM then
-      {numeral | format=format1, abbreviation=abbr ++ language.abbreviations.million, value=value / 10^6}
+      {numeral | format_value=format1, abbreviation=abbr ++ language.abbreviations.million, value=value / 10^6}
     else if absValue < 10^6 && absValue >= 10^3 && abbrForce || abbrK then
-      {numeral | format=format1, abbreviation=abbr ++ language.abbreviations.thousand, value=value / 10^3}
+      {numeral | format_value=format1, abbreviation=abbr ++ language.abbreviations.thousand, value=value / 10^3}
     else
-      {numeral | format=format1, abbreviation=abbr}
+      {numeral | format_value=format1, abbreviation=abbr}
 
 
 checkByte : Numeral -> Numeral
 checkByte numeral =
   let
-    {format, value} = numeral
+    {format_value, value} = numeral
     (bytes, format1) =
-      if String.contains " b" format then
-        (" ", emptyReplace " b" format)
+      if String.contains " b" format_value then
+        (" ", emptyReplace " b" format_value)
       else
-        ("", emptyReplace "b" format)
+        ("", emptyReplace "b" format_value)
 
     suffixIndex1 power =
       let
@@ -252,11 +257,11 @@ checkByte numeral =
             (-1, value)
     (suffixIndex, value1) = suffixIndex1 0
     suffix =
-      Array.get suffixIndex suffixes
+      Array.get (round suffixIndex) suffixes
       |> Maybe.withDefault ""
   in
-    if String.contains "b" format then
-      {numeral | format=format1, value=value1, bytes=bytes ++ suffix}
+    if String.contains "b" format_value then
+      {numeral | format_value=format1, value=value1, bytes=bytes ++ suffix}
     else
       numeral
 
@@ -264,24 +269,24 @@ checkByte numeral =
 checkOrdinal : Numeral -> Numeral
 checkOrdinal numeral =
   let
-    {language, format, value} = numeral
+    {language, format_value, value} = numeral
     (ord, format1) =
-      if String.contains " o" format then
-        (" ", emptyReplace " o" format)
+      if String.contains " o" format_value then
+        (" ", emptyReplace " o" format_value)
       else
-        ("", emptyReplace "o" format)
+        ("", emptyReplace "o" format_value)
   in
-    if String.contains "o" format then
-      {numeral | format=format1, ordinal=ord ++ (value |> numeral.language.ordinal)}
+    if String.contains "o" format_value then
+      {numeral | format_value=format1, ordinal=ord ++ (value |> numeral.language.ordinal)}
     else
       numeral
 
 
 checkOptionalDec : Numeral -> Numeral
 checkOptionalDec numeral =
-  if String.contains "[.]" numeral.format then
+  if String.contains "[.]" numeral.format_value then
     {numeral 
-      | format=Regex.replace All ("[.]" |> Regex.escape |> regex) (\_ -> ".") numeral.format
+      | format_value=Regex.replace (regex "[.]") (\_ -> ".") numeral.format_value -- potential error source
       , optionalDecimal=True}
   else
     numeral
@@ -291,7 +296,7 @@ checkForCustomSuffix : Numeral -> Numeral
 checkForCustomSuffix numeral =
   let
     hasSuffix = 
-      Regex.find All (regex "\\[\\D+\\]$") numeral.format
+      Regex.find (regex "\\[\\D+\\]$") numeral.format_value
       |> List.head
   in
     case hasSuffix of
@@ -299,8 +304,8 @@ checkForCustomSuffix numeral =
         numeral
       Just {match} ->
         { numeral 
-          | format=(Regex.replace All (match |> Regex.escape |> regex) (\_ -> "") numeral.format)
-          , customSuffix=(Regex.replace All (regex "\\[|\\]") (\_ -> "") match) }
+          | format_value=(Regex.replace (regex match) (\_ -> "") numeral.format_value)
+          , customSuffix=(Regex.replace (regex "\\[|\\]") (\_ -> "") match) }
 
 
 toFixed : Int -> Float -> String
@@ -317,7 +322,7 @@ toFixed precision value =
           val
   in
     (round (value * power + 0.01) |> toFloat) / power
-    |> toString
+    |> String.fromFloat
     |> String.split "."
     |> pad
     |> String.join "."
@@ -328,17 +333,19 @@ toFixedWithOptional prs value =
   case prs of
     [x, y] ->
       toFixed (x + y) value
-      |> emptyReplace ("0{1," ++ toString y ++ "}$")
+      |> emptyReplace ("0{1," ++ (String.fromInt y) ++ "}$")
     [x] ->
       toFixed x value
     _ ->
-      toString value
+      String.fromFloat value
 
+flip : (b -> a -> c) -> a -> b -> c
+flip f x y = f y x
 
 processPrecision : Numeral -> Numeral
 processPrecision numeral =
   let
-    {language, format, value, precision} = numeral
+    {language, format_value, value, precision} = numeral
     fst =
       if String.contains "[" precision then
         emptyReplace "]" precision
@@ -371,7 +378,6 @@ processPrecision numeral =
 addThousandsDelimiter : Language -> String -> String
 addThousandsDelimiter lang word =
   Regex.replace
-    All
     (regex "(\\d)(?=(\\d{3})+(?!\\d))")
     (\{match} -> match ++ lang.delimiters.thousands)
     word
@@ -379,7 +385,7 @@ addThousandsDelimiter lang word =
 
 updateStringValue : Numeral -> Numeral
 updateStringValue numeral =
-  {numeral | strValue=toString numeral.value}
+  {numeral | strValue=String.fromFloat numeral.value}
 
 
 processWord : Numeral -> Numeral
@@ -397,14 +403,14 @@ getPrecision : Numeral -> Numeral
 getPrecision numeral =
   let
     splitted =
-      String.split "." numeral.format
+      String.split "." numeral.format_value
     leadingZeros = 
       splitted
       |> List.head
       |> Maybe.withDefault ""
       |> String.length
     leadingZeros_ =
-      if String.contains "," numeral.format then
+      if String.contains "," numeral.format_value then
         0
       else
         leadingZeros 
@@ -441,7 +447,6 @@ processDecimal numeral =
     result =
       String.slice 1 (String.length d) d
       |> String.toInt
-      |> Result.toMaybe
       |> Maybe.withDefault 1
   in
     if numeral.optionalDecimal && result == 0 then
@@ -452,7 +457,7 @@ processDecimal numeral =
 
 checkThousandsDelimiter : Numeral -> Numeral
 checkThousandsDelimiter numeral =
-  if String.contains "," numeral.format then
+  if String.contains "," numeral.format_value then
     {numeral | word=addThousandsDelimiter numeral.language numeral.word}
   else
     numeral
@@ -470,7 +475,7 @@ checkIfNegative numeral =
 
 createFinalWord : Numeral -> Numeral
 createFinalWord numeral =
-  if indexOf "." numeral.format == 0 then
+  if indexOf "." numeral.format_value == 0 then
     {numeral | word=""}
   else
     numeral
@@ -548,15 +553,15 @@ formatNumber numeral =
     -- map myFormat [10123.12, 235798239.3242] == ["10.1千","235.8百万"]
 -}
 formatWithLanguage : Language -> String -> Float -> String
-formatWithLanguage lang format value =
-  if String.contains "$" format then
-    formatCurrency lang format value (toString value)
-  else if String.contains "%" format then
-    formatPercentage lang format value (toString value)
-  else if String.contains ":" format then
-    formatTime lang format value (toString value)
+formatWithLanguage lang lformat value =
+  if String.contains "$" lformat then
+    formatCurrency lang lformat value (String.fromFloat value)
+  else if String.contains "%" lformat then
+    formatPercentage lang lformat value (String.fromFloat value)
+  else if String.contains ":" lformat then
+    formatTime lang lformat value (String.fromFloat value)
   else
-    formatNumber (empty lang format value)
+    formatNumber (empty lang lformat value)
 
 
 {-| Same as formatWithLanguage, but English is set as default language.
