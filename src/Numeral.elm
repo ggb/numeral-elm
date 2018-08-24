@@ -286,7 +286,7 @@ checkOptionalDec : Numeral -> Numeral
 checkOptionalDec numeral =
   if String.contains "[.]" numeral.format_value then
     {numeral 
-      | format_value=Regex.replace (regex "[.]") (\_ -> ".") numeral.format_value -- potential error source
+      | format_value=Regex.replace (regex "\\[\\.\\]") (\_ -> ".") numeral.format_value 
       , optionalDecimal=True}
   else
     numeral
@@ -304,7 +304,7 @@ checkForCustomSuffix numeral =
         numeral
       Just {match} ->
         { numeral 
-          | format_value=(Regex.replace (regex match) (\_ -> "") numeral.format_value)
+          | format_value=(String.replace match "" numeral.format_value)
           , customSuffix=(Regex.replace (regex "\\[|\\]") (\_ -> "") match) }
 
 
