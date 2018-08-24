@@ -15,9 +15,9 @@ englishOrdinal number =
             floor number
 
         b =
-            modBy number1 10
+            modBy 10 number1
     in
-        if floor (toFloat (modBy number1 100) / 10) == 1 then
+        if floor (toFloat (modBy 100 number1) / 10) == 1 then
             "th"
         else if b == 1 then
             "st"

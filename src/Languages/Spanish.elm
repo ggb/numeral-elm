@@ -16,7 +16,7 @@ spanishOrdinal number =
             floor number
 
         b =
-            number1 % 10
+            modBy 10 number1
     in
     if b == 1 || b == 3 then
         "er"
