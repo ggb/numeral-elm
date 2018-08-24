@@ -1,8 +1,9 @@
 module Tests exposing (..)
 
-import Test exposing (..)
+import Test exposing (Test, test, describe)
 import Expect
 import Numeral
+import Tuple exposing (pair)
 
 
 type alias CaseCollection = (String, List Case)
@@ -11,7 +12,7 @@ type alias Case = (Float, String, String)
 
 numbers : CaseCollection
 numbers =
-  (,) "Numbers"
+  pair "Numbers"
   [
     (10000,"0,0.0000","10,000.0000"),
     (10000.23,"0,0","10,000"),
@@ -55,7 +56,7 @@ numbers =
 
 currency : CaseCollection
 currency =
-  (,) "Currency"
+  pair "Currency"
   [
     (1000.234,"$0,0.00","$1,000.23"),
     (1001,"$ 0,0.[00]","$ 1,001"),
@@ -86,7 +87,7 @@ currency =
 
 bytes : CaseCollection
 bytes =
-  (,) "Bytes"
+  pair "Bytes"
   [
     (100,"0b","100B"),
     (1024*2,"0 b","2 KB"),
@@ -99,7 +100,7 @@ bytes =
 
 percentages : CaseCollection
 percentages =
-  (,) "Percentages"
+  pair "Percentages"
   [
     (1,"0%","100%"),
     (0.974878234,"0.000%","97.488%"),
@@ -110,7 +111,7 @@ percentages =
 
 times : CaseCollection
 times =
-  (,) "Times"
+  pair "Times"
   [
     (25,"00:00:00","0:00:25"),
     (238,"00:00:00","0:03:58"),
@@ -120,7 +121,7 @@ times =
 
 customUnitSuffix : CaseCollection
 customUnitSuffix = 
-  (,) "Custom Unit Suffix"
+  pair "Custom Unit Suffix"
   [
     (12345,"0,0[ pcs.]","12,345 pcs."),
     (12345,"0,0[pcs.]","12,345pcs."),
@@ -132,7 +133,7 @@ customUnitSuffix =
 
 rounding : CaseCollection
 rounding =
-  (,) "Rounding"
+  pair "Rounding"
   [
     (2.385, "0,0.00", "2.39"),
     (28.885, "0,0.00", "28.89")
@@ -141,7 +142,7 @@ rounding =
 
 leadingZeros : CaseCollection
 leadingZeros =
-  (,) "Leading Zeros"
+  pair "Leading Zeros"
   [
     (12, "000", "012"),
     (1.932,"000.0","001.9"),
@@ -157,7 +158,7 @@ leadingZeros =
 
 createTest : Case -> Test
 createTest (source, format, expected) = 
-  test (expected ++ " == " ++ "Numeral.format " ++ format ++ " " ++ (toString source)) <|
+  test (expected ++ " == " ++ "Numeral.format " ++ format ++ " " ++ (String.fromFloat source)) <|
     \() -> 
         Expect.equal expected (Numeral.format format source)
 
