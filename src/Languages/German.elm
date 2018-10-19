@@ -17,14 +17,14 @@ germanOrdinal number =
 
     lang =
       { delimiters=
-        { thousands=" "
+        { thousands="."
         , decimal=","
         }
       , abbreviations=
-        { thousand="k"
-        , million="m"
-        , billion="b"
-        , trillion="t"
+        { thousand="Tsd."
+        , million="Mil."
+        , billion="Mrd."
+        , trillion="Bil."
         }
       , ordinal=germanOrdinal
       , currency=
@@ -35,14 +35,14 @@ germanOrdinal number =
 lang : Language
 lang =
   { delimiters=
-    { thousands=" "
+    { thousands="."
     , decimal=","
     }
   , abbreviations=
-    { thousand="k"
-    , million="m"
-    , billion="b"
-    , trillion="t"
+    { thousand="Tsd."
+    , million="Mil."
+    , billion="Mrd."
+    , trillion="Bil."
     }
   , ordinal=germanOrdinal
   , currency=
