@@ -3,7 +3,7 @@
     "name": "ggb/numeral-elm",
     "summary": "Elm module for (advanced) number formatting. Numeral.js port to Elm",
     "license": "MIT",
-    "version": "1.4.3",
+    "version": "1.5.0",
     "exposed-modules": [
         "Numeral",
         "Language",
