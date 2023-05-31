@@ -15,6 +15,7 @@ import Language exposing (..)
 import Languages.English as English
 import Regex exposing (..)
 import String
+import Round exposing(toDecimal)
 
 
 type alias NumberTypeFormatter =
@@ -50,7 +51,7 @@ empty lang format_val value =
   , format_value=format_val
   , value=value
   , word=""
-  , strValue=String.fromFloat value
+  , strValue=toDecimal value
   , signed=False
   , neg=False
   , negP=False
@@ -322,7 +323,7 @@ toFixed precision value =
           val
   in
     (round (value * power + 0.01) |> toFloat) / power
-    |> String.fromFloat
+    |> toDecimal
     |> String.split "."
     |> pad
     |> String.join "."
@@ -337,7 +338,7 @@ toFixedWithOptional prs value =
     [x] ->
       toFixed x value
     _ ->
-      String.fromFloat value
+      toDecimal value
 
 flip : (b -> a -> c) -> a -> b -> c
 flip f x y = f y x
@@ -385,7 +386,7 @@ addThousandsDelimiter lang word =
 
 updateStringValue : Numeral -> Numeral
 updateStringValue numeral =
-  {numeral | strValue=String.fromFloat numeral.value}
+  {numeral | strValue=toDecimal numeral.value}
 
 
 processWord : Numeral -> Numeral
@@ -555,11 +556,11 @@ formatNumber numeral =
 formatWithLanguage : Language -> String -> Float -> String
 formatWithLanguage lang lformat value =
   if String.contains "$" lformat then
-    formatCurrency lang lformat value (String.fromFloat value)
+    formatCurrency lang lformat value (toDecimal value)
   else if String.contains "%" lformat then
-    formatPercentage lang lformat value (String.fromFloat value)
+    formatPercentage lang lformat value (toDecimal value)
   else if String.contains ":" lformat then
-    formatTime lang lformat value (String.fromFloat value)
+    formatTime lang lformat value (toDecimal value)
   else
     formatNumber (empty lang lformat value)
 
